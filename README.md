@@ -1,2 +1,2 @@
 # redstone.go
-A minimal wrapper for vanilla Minecraft servers providing a http interface
+##redstone.go is a minimal wrapper for Minecraft servers that provide an http interface
