@@ -32,6 +32,10 @@ func (m *Minecraft) initCmd() {
 	m.in, _ = m.cmd.StdinPipe()
 }
 
+func (m *Minecraft) parse(string) {
+	//TODO extract information form the server output and do somthing with it
+}
+
 //Scan wait until the next line from the standard output is ready and return true
 //or until an error occurs and return false
 //errors are likely to be EOF after the terminaison of the server
