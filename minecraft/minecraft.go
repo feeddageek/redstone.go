@@ -3,7 +3,6 @@ package minecraft
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"os/exec"
 )
@@ -40,6 +39,7 @@ type Instance struct {
 
 //Start launch a new instance and return its handel
 func Start(jar Jar,world World) (i *Instance,err error) {
+	i = new(Instance)
 	i.cmd = exec.Command("java",append(jar.args,"-jar",jar.jar,"nogui")...)
 	i.cmd.Dir = world.path
 	out, err := i.cmd.StdoutPipe()
