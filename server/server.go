@@ -16,7 +16,8 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func startHandler(w http.ResponseWriter, req *http.Request) {
-	if err := m.Start(); err != nil {
+	
+	if i,err := minecraft.Start(jar,world); err != nil {
 		fmt.Fprintf(w, "Not started : %s", err.Error())
 	} else {
 		go disp()
@@ -25,7 +26,7 @@ func startHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func stopHandler(w http.ResponseWriter, req *http.Request) {
-	if err := m.Stop(); err != nil {
+	if err := i.Stop(); err != nil {
 		fmt.Fprintf(w, "Not stopped : %s", err.Error())
 	} else {
 		w.Write([]byte("Stopped.\n"))
@@ -33,15 +34,18 @@ func stopHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func disp() {
-	for m.Scan() {
-		log.Println(m.Text())
+	for i.Scan() {
+		log.Println(i.Text())
 	}
 }
 
-var m *minecraft.Minecraft
+var i *minecraft.Instance
+var jar minecraft.Jar
+var world minecraft.World
 
 func main() {
-	m = minecraft.New("./minecraft/", "minecraft_server.jar", "-Xmx900M", "-Xms900M")
+	jar = minecraft.NewJar("minecraft_server.jar","-Xmx900M", "-Xms900M")
+	world = minecraft.NewWorld("./minecraft/")
 	http.HandleFunc("/res/", ressourceHandler)
 	http.HandleFunc("/login/", loginHandler)
 	http.HandleFunc("/start/", startHandler)
