@@ -7,6 +7,10 @@ import (
 	"net/http"
 )
 
+var i *minecraft.Instance
+var jar minecraft.Jar
+var world minecraft.World
+
 func ressourceHandler(w http.ResponseWriter, req *http.Request) {
 	//TODO add a handler that serve static ressources
 }
@@ -15,13 +19,18 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 	//TODO add a mechanism to handle authentication
 }
 
-func startHandler(w http.ResponseWriter, req *http.Request) {
-	
-	if i,err := minecraft.Start(jar,world); err != nil {
-		fmt.Fprintf(w, "Not started : %s", err.Error())
+func redstoneHandler(w http.ResponseWriter, req *http.Request) {
+	if i!=nil  && i.Running(){
+		w.Write([]byte("The server is running.\n"))
 	} else {
-		go disp()
-		w.Write([]byte("Started.\n"))
+		var err error
+		i,err = minecraft.Start(jar,world)
+		if err != nil {
+			w.Write([]byte("An error has occured.\n"))
+			fmt.Fprintf(w, "Not started : %s", err.Error())
+		} else {
+			w.Write([]byte("Started.\n"))
+		}
 	}
 }
 
@@ -33,25 +42,13 @@ func stopHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func disp() {
-	for i.Scan() {
-		log.Println(i.Text())
-	}
-}
-
-var i *minecraft.Instance
-var jar minecraft.Jar
-var world minecraft.World
-
 func main() {
-	jar = minecraft.NewJar("minecraft_server.jar","-Xmx900M", "-Xms900M")
+	jar = minecraft.NewJar("minecraft_server.jar","-Xmx1700M", "-Xms1700M")
 	world = minecraft.NewWorld("./minecraft/")
 	http.HandleFunc("/res/", ressourceHandler)
-	http.HandleFunc("/login/", loginHandler)
-	http.HandleFunc("/start/", startHandler)
-	http.HandleFunc("/stop/", stopHandler)
+	http.HandleFunc("/redstone/", redstoneHandler)
 	log.SetFlags(0)
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":80", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
