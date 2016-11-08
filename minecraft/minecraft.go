@@ -10,23 +10,13 @@ import (
 
 //Jar contain the path to a minecraft server jar and its jvm's arguments
 type Jar struct {
-	jar     string
-	args    []string
-}
-
-//Jar constructor
-func NewJar(jar string, args ...string) Jar{
-	return Jar{jar:jar,args:args}
+	Jar     string
+	Args    []string
 }
 
 //World contain the path to a mincraft world
 type World struct {
-	path	string
-}
-
-//World constructor
-func NewWorld(path string) World{
-	return World{path:path}
+	Path	string
 }
 
 //Instance contain usefull data about a running instance
@@ -43,8 +33,8 @@ type Instance struct {
 func Start(jar Jar,world World) (*Instance, error) {
 	var i Instance
 	var err error
-	i.cmd = exec.Command("java",append(jar.args,"-jar",jar.jar,"nogui")...)
-	i.cmd.Dir = world.path
+	i.cmd = exec.Command("java",append(jar.Args,"-jar",jar.Jar,"nogui")...)
+	i.cmd.Dir = world.Path
 	//out, err := i.cmd.StdoutPipe()
 	i.cmd.Stdout = os.Stdout
 	if err == nil{

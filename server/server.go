@@ -1,15 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"github.com/feeddageek/redstone.go/minecraft"
 	"log"
+	"fmt"
+	"strconv"
 	"net/http"
+	"io/ioutil"
+	"encoding/json"
+	"github.com/feeddageek/redstone.go/minecraft"
 )
 
-var i *minecraft.Instance
-var jar minecraft.Jar
-var world minecraft.World
+type Server struct {
+	Jar	minecraft.Jar
+	World	minecraft.World
+	Port	uint16
+	i	*minecraft.Instance
+}
+
+var s Server
+
+//THE ROAD TO WISDOM
+//Err and err and err again,
+//but less and less and less.
+func r2w(err error){
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func ressourceHandler(w http.ResponseWriter, req *http.Request) {
 	//TODO add a handler that serve static ressources
@@ -20,11 +37,11 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func redstoneHandler(w http.ResponseWriter, req *http.Request) {
-	if i!=nil  && i.Running(){
+	if s.i!=nil  && s.i.Running(){
 		w.Write([]byte("The server is running.\n"))
 	} else {
 		var err error
-		i,err = minecraft.Start(jar,world)
+		s.i,err = minecraft.Start(s.Jar,s.World)
 		if err != nil {
 			w.Write([]byte("An error has occured.\n"))
 			fmt.Fprintf(w, "Not started : %s", err.Error())
@@ -35,7 +52,7 @@ func redstoneHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func stopHandler(w http.ResponseWriter, req *http.Request) {
-	if err := i.Stop(); err != nil {
+	if err := s.i.Stop(); err != nil {
 		fmt.Fprintf(w, "Not stopped : %s", err.Error())
 	} else {
 		w.Write([]byte("Stopped.\n"))
@@ -43,13 +60,13 @@ func stopHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	jar = minecraft.NewJar("minecraft_server.jar","-Xmx1700M", "-Xms1700M")
-	world = minecraft.NewWorld("./minecraft/")
+	f,err:= ioutil.ReadFile("redstone.json")
+	r2w(err)
+	err = json.Unmarshal(f,&s)
+	r2w(err)
 	http.HandleFunc("/res/", ressourceHandler)
 	http.HandleFunc("/redstone/", redstoneHandler)
 	log.SetFlags(0)
-	err := http.ListenAndServe(":80", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	err = http.ListenAndServe(":"+strconv.Itoa(int(s.Port)), nil)
+	r2w(err)
 }
