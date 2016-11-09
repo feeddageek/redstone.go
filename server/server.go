@@ -14,8 +14,17 @@ type Server struct {
 	Jar	minecraft.Jar
 	World	minecraft.World
 	Port	uint16
+	Conf	Httpconf
 	i	*minecraft.Instance
 }
+
+type Httpconf struct {
+	Port	uint16
+	Tls	bool
+	Cert	string
+	Key	string
+}
+
 
 var s Server
 
@@ -67,6 +76,10 @@ func main() {
 	http.HandleFunc("/res/", ressourceHandler)
 	http.HandleFunc("/redstone/", redstoneHandler)
 	log.SetFlags(0)
-	err = http.ListenAndServe(":"+strconv.Itoa(int(s.Port)), nil)
+	if !s.Conf.Tls || s.Conf.Key == "" || s.Conf.Cert == "" {
+		err = http.ListenAndServe(":"+strconv.Itoa(int(s.Conf.Port)), nil)
+	} else {
+		err = http.ListenAndServeTLS(":"+strconv.Itoa(int(s.Conf.Port)),s.Conf.Cert,s.Conf.Key, nil)
+	}
 	r2w(err)
 }
