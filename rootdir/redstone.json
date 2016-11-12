@@ -1,0 +1,14 @@
+{
+	"Jar":{
+		"Jar":"jars/minecraft_server.jar",
+		"JArgs":["-Xmx1000M","-Xms1000M"],
+		"MArgs":["nogui"]
+	},
+	"World":{"Path":"worlds/myworld/"},
+	"Conf":{
+		"Port":443,
+		"Tls":true,
+		"Cert":"cert.pem",
+		"Key":"key.pem"
+	}
+}
