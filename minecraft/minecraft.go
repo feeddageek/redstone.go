@@ -3,56 +3,72 @@ package minecraft
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 //Jar contain the path to a minecraft server jar and its jvm's arguments
 type Jar struct {
-	Jar     string
-	Args    []string
+	Jar   string
+	JArgs []string
+	MArgs []string
 }
 
 //World contain the path to a mincraft world
 type World struct {
-	Path	string
+	Path string
+	used bool
 }
 
 //Instance contain usefull data about a running instance
 type Instance struct {
-	jar	Jar
-	world	World
+	jar     Jar
+	world   *World
 	cmd     *exec.Cmd
-	out	*bufio.Scanner
-	in	io.Writer
-	running	bool
+	out     *bufio.Scanner
+	in      io.Writer
+	running bool
 }
 
 //Start launch a new instance and return its handel
-func Start(jar Jar,world World) (*Instance, error) {
+func Start(jar Jar, world *World) (*Instance, error) {
 	var i Instance
 	var err error
-	i.cmd = exec.Command("java",append(jar.Args,"-jar",jar.Jar,"nogui")...)
-	i.cmd.Dir = world.Path
-	//out, err := i.cmd.StdoutPipe()
-	i.cmd.Stdout = os.Stdout
-	if err == nil{
-		//i.out = bufio.NewScanner(out)
-		//i.in, err = i.cmd.StdinPipe()
-		i.cmd.Stdin = os.Stdin
-		if err == nil{
-			err = i.cmd.Start()
-			if err == nil {
-				i.running = true
-				go i.atStop()
-				return &i,err
-			}
-		}
-
+	if world.used {
+		err = errors.New("World already in use")
+		return nil, err
 	}
-	return nil,err
+	world.used = true
+	i.world = world
+	i.jar = jar
+	var jarpath string
+	if jarpath, err = filepath.Abs(jar.Jar); err != nil {
+		return nil, err
+	}
+	i.cmd = exec.Command("java", append(append(jar.JArgs, "-jar", jarpath), jar.MArgs...)...)
+	if i.cmd.Dir, err = filepath.Abs(world.Path); err != nil {
+		return nil, err
+	}
+	//if out, err := i.cmd.StdoutPipe();err != nil {
+	//	return nil,err
+	//}
+	i.cmd.Stdout = os.Stdout
+	//i.out = bufio.NewScanner(out)
+	//if i.in, err = i.cmd.StdinPipe();err != nil {
+	//	return nil,err
+	//}
+	i.cmd.Stdin = os.Stdin
+	if err = i.cmd.Start(); err != nil {
+		return nil, err
+	}
+	i.running = true
+	go i.atStop()
+	return &i, err
 }
+
 //Stop request the instance to stop and wait until its process return
 func (i *Instance) Stop() (err error) {
 	_, err = i.in.Write([]byte("stop\n"))
@@ -67,16 +83,17 @@ func (i *Instance) parse(string) {
 }
 
 //atStop wait for cmd and set running to false
-func (i *Instance) atStop(){
+func (i *Instance) atStop() {
 	err := i.cmd.Wait()
+	i.world.used = false
 	i.running = false
-	if err != nil{
+	if err != nil {
 		//TODO something has to be done with that error
 	}
 }
 
 //Running return false if the cmd exited, true otherwise
-func (i *Instance) Running() bool{
+func (i *Instance) Running() bool {
 	return i.running
 }
 
