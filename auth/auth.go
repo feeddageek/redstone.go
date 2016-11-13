@@ -1,17 +1,9 @@
 package auth
 
 type Identity struct {
-	Id    string          `json:"Id"`
-	Name  string          `json:"Name"`
-	Perms map[string]bool `json:"Perms"`
-}
-
-type AuthError struct {
-	err string
-}
-
-func (e AuthError) Error() string {
-	return e.err
+	Id    string
+	Name  string
+	Perms []string
 }
 
 type Auth interface {

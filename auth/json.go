@@ -3,35 +3,22 @@ package auth
 import (
 	"crypto/sha1"
 	"encoding/base32"
-	"encoding/json"
+	"errors"
 )
-type Json struct {
-	j authj
+
+type Authj struct {
+	Salt  string
+	Users map[string]Identity
 }
 
-type authj struct {
-	Salt  string              `json:"Salt"`
-	Users map[string]Identity `json:"Users"`
-}
-
-func (a *Json) New (data []byte)(err error){
-	err = json.Unmarshal(data, &a.j)
-	return
-}
-
-func (a *Json) Save()(data []byte,err error){
-	data,err = json.Marshal(&a.j)
-	return
-}
-
-func (a Json) Authenticate(username string, password string) (id Identity, err error) {
-	id,ok := a.j.Users[username]
-	toHash := sha1.Sum([]byte(password + a.j.Salt))
+func (a Authj) Authenticate(username string, password string) (id Identity, err error) {
+	id, ok := a.Users[username]
+	toHash := sha1.Sum([]byte(password + a.Salt))
 	key := base32.StdEncoding.EncodeToString(toHash[:])
-	if ok && a.j.Users[username].Id == key {
+	if ok && a.Users[username].Id == key {
 		return
 	}
 	id = Identity{}
-	err = AuthError{"Invalid username or password. "+key}
+	err = errors.New("Invalid username or password. " + key)
 	return
 }
